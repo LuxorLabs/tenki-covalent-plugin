@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "covalent-tenki-plugin"
+version = "0.1.0"
+description = "Covalent executor plugin that runs each task in a disposable Tenki Sandbox microVM"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Shane Santner", email = "shane.santner@luxor.tech" }]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Plugins",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Distributed Computing",
+]
+dependencies = [
+    "covalent>=0.230.0",
+    "tenki-sandbox>=0.3.6",
+    "cloudpickle>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.entry-points."covalent.executor.executor_plugins"]
+tenki = "covalent_tenki_plugin.tenki"
+
+[tool.setuptools.packages.find]
+include = ["covalent_tenki_plugin*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
