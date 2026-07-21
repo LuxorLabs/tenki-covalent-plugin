@@ -1,0 +1,86 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Run checks and package build without publishing
+        type: boolean
+        default: true
+      skip_publish:
+        description: Tag only - never publish to the registry (safe tag test / backfill)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: pypi-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: tenki-standard-small-2c-4g
+    environment: pypi-publish
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Setup Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+          pip install -e ".[dev]"
+
+      - name: Test
+        run: pytest
+
+      - name: Build
+        run: python -m build
+
+      - name: Check package
+        run: twine check dist/*
+
+      - name: Check if version is already published
+        id: version
+        run: |
+          set -euo pipefail
+
+          NAME=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["name"])')
+          VERSION=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+
+          if curl -fsS "https://pypi.org/pypi/${NAME}/${VERSION}/json" >/dev/null 2>&1; then
+            echo "${NAME}@${VERSION} already published, skipping"
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to PyPI
+        if: ${{ steps.version.outputs.published == 'false' && inputs.dry_run == false && inputs.skip_publish == false }}
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+
+      - name: Tag release
+        if: ${{ inputs.dry_run == false }}
+        run: |
+          set -euo pipefail
+
+          # Tag the exact published commit at publish time.
+          # Only push when the tag is new, including missing-tag backfills.
+          VERSION=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          tag="v${VERSION}"
+          if git ls-remote --tags origin "refs/tags/${tag}" | awk '{print $2}' | grep -qxF "refs/tags/${tag}"; then
+            echo "tag ${tag} already exists, skipping"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${tag}" -m "${tag}"
+          git push origin "refs/tags/${tag}" 2>/dev/null || git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1
