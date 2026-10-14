@@ -1,5 +1,5 @@
 """
-Unit tests for TenkiExecutor. The tenki-sandbox SDK is fully mocked -- no
+Unit tests for TenkiExecutor. The tenki SDK is fully mocked -- no
 network, no credentials, no real sandboxes.
 """
 
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import cloudpickle
 import pytest
@@ -57,7 +57,7 @@ def make_mock_sandbox(result_value=None, result_exception=None, remote_minor=Non
 
 
 def make_executor(sandbox) -> TenkiExecutor:
-    executor = TenkiExecutor(project_id="proj-cov")
+    executor = TenkiExecutor(workspace_id="ws-cov")
     client = MagicMock()
     client.create.return_value = sandbox
     executor._make_client = MagicMock(return_value=client)
@@ -83,7 +83,7 @@ class TestRun:
 
         # sandbox created with self-destruct + covalent metadata, then cleaned up
         create_kwargs = executor._client_mock.create.call_args.kwargs
-        assert create_kwargs["project_id"] == "proj-cov"
+        assert create_kwargs["workspace_id"] == "ws-cov"
         assert create_kwargs["max_duration"] == 3600
         assert create_kwargs["metadata"]["covalent-dispatch-id"] == "d-123"
         sandbox.terminate.assert_called_once()
@@ -156,35 +156,30 @@ class TestConfiguration:
 
     def test_executor_instance_is_cloudpickle_serializable(self):
         # Covalent serializes executor instances; ours must survive it.
-        executor = TenkiExecutor(project_id="p", cpu_cores=4)
+        executor = TenkiExecutor(workspace_id="w", cpu_cores=4)
         clone = cloudpickle.loads(cloudpickle.dumps(executor))
-        assert clone.project_id == "p"
+        assert clone.workspace_id == "w"
         assert clone.cpu_cores == 4
 
 
-class TestProjectResolution:
-    def test_explicit_project_id_wins(self):
-        executor = TenkiExecutor(project_id="explicit")
+class TestWorkspaceResolution:
+    def test_explicit_workspace_id_wins(self):
+        executor = TenkiExecutor(workspace_id="explicit")
         client = MagicMock()
-        assert executor._resolve_project_id(client) == "explicit"
+        assert executor._resolve_workspace_id(client) == "explicit"
         client.who_am_i.assert_not_called()
 
-    def test_falls_back_to_first_identity_project(self):
+    def test_falls_back_to_first_identity_workspace(self):
         executor = TenkiExecutor()
         client = MagicMock()
         client.who_am_i.return_value = SimpleNamespace(
-            workspaces=[
-                SimpleNamespace(projects=[]),
-                SimpleNamespace(projects=[SimpleNamespace(id="proj-first")]),
-            ]
+            workspaces=[SimpleNamespace(id="ws-first"), SimpleNamespace(id="ws-second")]
         )
-        assert executor._resolve_project_id(client) == "proj-first"
+        assert executor._resolve_workspace_id(client) == "ws-first"
 
-    def test_no_projects_raises(self):
+    def test_no_workspaces_raises(self):
         executor = TenkiExecutor()
         client = MagicMock()
-        client.who_am_i.return_value = SimpleNamespace(
-            workspaces=[SimpleNamespace(projects=[])]
-        )
-        with pytest.raises(RuntimeError, match="No Tenki project"):
-            executor._resolve_project_id(client)
+        client.who_am_i.return_value = SimpleNamespace(workspaces=[])
+        with pytest.raises(RuntimeError, match="No Tenki workspace"):
+            executor._resolve_workspace_id(client)

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "covalent-tenki-plugin"
-version = "0.1.0"
+version = "0.1.1"
 description = "Covalent executor plugin that runs each task in a disposable Tenki Sandbox microVM"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [
     "covalent>=0.230.0",
-    "tenki-sandbox>=0.3.6",
+    "tenki>=1.4.1",
     "cloudpickle>=2.0",
 ]
 
