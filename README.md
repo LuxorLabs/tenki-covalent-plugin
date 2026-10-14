@@ -18,8 +18,9 @@ pip install covalent-tenki-plugin
 ## Prerequisites
 
 1. A [Tenki Cloud](https://app.tenki.cloud) account with sandbox access.
-2. A Tenki API key, exposed as `TENKI_API_KEY` (or `TENKI_AUTH_TOKEN`) on the
-   machine running the Covalent dispatcher.
+2. A Tenki API key (`tk_...`), exposed as `TENKI_API_KEY` (or
+   `TENKI_AUTH_TOKEN`) on the machine running the Covalent dispatcher. The
+   `tenki` SDK 1.x accepts only `tk_` API keys.
 3. Local Python minor version matching the sandbox Python (3.12 on the default
    image) — tasks travel via `cloudpickle`, which requires matching
    interpreters. The executor verifies this and fails fast with a clear
@@ -53,7 +54,7 @@ dispatch_id = ct.dispatch(workflow)(1764)
 
 | Argument | Default | Description |
 |---|---|---|
-| `project_id` | first project on the API key | Tenki project to create sandboxes in |
+| `workspace_id` | first workspace on the API key | Tenki workspace to create sandboxes in |
 | `cpu_cores` | Tenki default (2) | Sandbox CPU cores |
 | `memory_mb` | Tenki default (4096) | Sandbox memory |
 | `disk_size_gb` | Tenki default (5) | Ephemeral root disk |
@@ -67,7 +68,7 @@ dispatch_id = ct.dispatch(workflow)(1764)
 
 For each electron the executor:
 
-1. **Creates** a sandbox via the official `tenki-sandbox` Python SDK, with
+1. **Creates** a sandbox via the official [`tenki`](https://pypi.org/project/tenki/) Python SDK, with
    `max_duration` set so the VM self-destructs server-side even if the
    dispatcher crashes (no leaked billing).
 2. **Bootstraps** a virtualenv and installs `cloudpickle`, `covalent` (pinned

@@ -22,7 +22,7 @@ classifiers = [
 ]
 dependencies = [
     "covalent>=0.230.0",
-    "tenki-sandbox>=0.3.6",
+    "tenki>=1.4.1",
     "cloudpickle>=2.0",
 ]
 

@@ -4,7 +4,7 @@ Tenki Sandbox microVM (Firecracker).
 
 Lifecycle per task:
 
-1. Create a sandbox via the official ``tenki-sandbox`` SDK. ``max_duration``
+1. Create a sandbox via the official ``tenki`` SDK. ``max_duration``
    acts as a server-side self-destruct so a crashed dispatcher cannot leak
    billed VMs.
 2. Bootstrap a Python virtualenv in the sandbox and install ``cloudpickle``
@@ -18,7 +18,7 @@ Lifecycle per task:
 
 Authentication uses the ``TENKI_API_KEY`` (or ``TENKI_AUTH_TOKEN``)
 environment variable on the machine running the Covalent dispatcher, as
-resolved by the SDK.
+resolved by the SDK. SDK 1.x accepts only ``tk_`` API keys.
 
 Because tasks are transported with cloudpickle, the local Python
 interpreter's minor version must match the sandbox's Python (3.12 on the
@@ -44,12 +44,12 @@ import covalent
 from covalent._shared_files import logger
 from covalent.executor.base import AsyncBaseExecutor
 
-from tenki_sandbox import Client
+from tenki import Client
 
 app_log = logger.app_log
 
 _EXECUTOR_PLUGIN_DEFAULTS = {
-    "project_id": "",
+    "workspace_id": "",
     "cpu_cores": 0,
     "memory_mb": 0,
     "disk_size_gb": 0,
@@ -105,8 +105,8 @@ class TenkiExecutor(AsyncBaseExecutor):
     Covalent executor that runs each electron in a fresh Tenki Sandbox microVM.
 
     Args:
-        project_id: Tenki project ID to create sandboxes in. Defaults to the
-            first project visible to the configured API key.
+        workspace_id: Tenki workspace ID to create sandboxes in. Defaults to
+            the first workspace visible to the configured API key.
         cpu_cores: CPU cores for the sandbox (Tenki default if falsy).
         memory_mb: Memory in MB for the sandbox (Tenki default if falsy).
         disk_size_gb: Ephemeral root disk in GB (Tenki default if falsy).
@@ -123,7 +123,7 @@ class TenkiExecutor(AsyncBaseExecutor):
 
     def __init__(
         self,
-        project_id: str = "",
+        workspace_id: str = "",
         cpu_cores: int = 0,
         memory_mb: int = 0,
         disk_size_gb: int = 0,
@@ -135,7 +135,7 @@ class TenkiExecutor(AsyncBaseExecutor):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        self.project_id = project_id
+        self.workspace_id = workspace_id
         self.cpu_cores = cpu_cores
         self.memory_mb = memory_mb
         self.disk_size_gb = disk_size_gb
@@ -152,16 +152,14 @@ class TenkiExecutor(AsyncBaseExecutor):
         instance cloudpickle-serializable (no live gRPC channels on self)."""
         return Client()
 
-    def _resolve_project_id(self, client: Client) -> str:
-        if self.project_id:
-            return self.project_id
+    def _resolve_workspace_id(self, client: Client) -> str:
+        if self.workspace_id:
+            return self.workspace_id
         identity = client.who_am_i()
-        for workspace in identity.workspaces:
-            projects = getattr(workspace, "projects", None) or []
-            if projects:
-                return projects[0].id
+        if identity.workspaces:
+            return identity.workspaces[0].id
         raise RuntimeError(
-            "No Tenki project visible to this API key; pass project_id to "
+            "No Tenki workspace visible to this API key; pass workspace_id to "
             "TenkiExecutor explicitly."
         )
 
@@ -209,7 +207,7 @@ class TenkiExecutor(AsyncBaseExecutor):
         try:
             sandbox = client.create(
                 name=f"covalent-{dispatch_id}-{node_id}",
-                project_id=self._resolve_project_id(client),
+                workspace_id=self._resolve_workspace_id(client),
                 cpu_cores=self.cpu_cores or None,
                 memory_mb=self.memory_mb or None,
                 disk_size_gb=self.disk_size_gb or None,
@@ -289,7 +287,7 @@ class TenkiExecutor(AsyncBaseExecutor):
         """Run ``function(*args, **kwargs)`` inside a fresh Tenki sandbox."""
         function_blob = cloudpickle.dumps((function, args, kwargs))
 
-        # The tenki-sandbox SDK is synchronous (gRPC); run in a thread so the
+        # The tenki SDK is synchronous (gRPC); run in a thread so the
         # dispatcher's event loop keeps servicing other electrons.
         result_blob = await asyncio.to_thread(
             self._run_in_sandbox, function_blob, task_metadata
