@@ -18,7 +18,7 @@ pip install covalent-tenki-plugin
 ## Prerequisites
 
 1. A [Tenki Cloud](https://app.tenki.cloud) account with sandbox access.
-2. A Tenki API key, exposed as `TENKI_API_KEY` (or `TENKI_AUTH_TOKEN`) on the
+2. A Tenki API key, exposed as `LUXORAI_API_KEY` or `TENKI_API_KEY` (or `TENKI_AUTH_TOKEN`) on the
    machine running the Covalent dispatcher.
 3. Local Python minor version matching the sandbox Python (3.12 on the default
    image) — tasks travel via `cloudpickle`, which requires matching
