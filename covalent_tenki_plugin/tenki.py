@@ -17,9 +17,9 @@ Lifecycle per task:
 4. Terminate the sandbox unconditionally.
 
 Authentication uses the ``LUXORAI_API_KEY`` or ``TENKI_API_KEY`` (or
-``TENKI_AUTH_TOKEN``) environment variable on the machine running the Covalent
-dispatcher, as resolved by the SDK (``LUXORAI_*`` needs an SDK release that
-reads it).
+``LUXORAI_AUTH_TOKEN`` / ``TENKI_AUTH_TOKEN``) environment variable on the
+machine running the Covalent dispatcher, as resolved by the SDK (``LUXORAI_*``
+and ``lx_`` keys need ``tenki`` 1.4.2 or later).
 
 Because tasks are transported with cloudpickle, the local Python
 interpreter's minor version must match the sandbox's Python (3.12 on the
