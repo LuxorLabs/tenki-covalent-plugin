@@ -15,11 +15,16 @@ another's.
 pip install covalent-tenki-plugin
 ```
 
+`covalent-luxor-ai-plugin` is the same plugin under the Luxor AI name (same
+`covalent_tenki_plugin` module and `tenki` executor). Install one or the other,
+never both.
+
 ## Prerequisites
 
 1. A [Tenki Cloud](https://app.tenki.cloud) account with sandbox access.
-2. A Tenki API key, exposed as `TENKI_API_KEY` (or `TENKI_AUTH_TOKEN`) on the
-   machine running the Covalent dispatcher.
+2. A Tenki API key, exposed as `LUXORAI_API_KEY` or `TENKI_API_KEY` (or `LUXORAI_AUTH_TOKEN` /
+   `TENKI_AUTH_TOKEN`) on the machine running the Covalent dispatcher
+   (`LUXORAI_*` and `lx_` keys need `tenki` 1.4.2 or later).
 3. Local Python minor version matching the sandbox Python (3.12 on the default
    image) — tasks travel via `cloudpickle`, which requires matching
    interpreters. The executor verifies this and fails fast with a clear
