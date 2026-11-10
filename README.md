@@ -15,6 +15,10 @@ another's.
 pip install covalent-tenki-plugin
 ```
 
+`covalent-luxor-ai-plugin` is the same plugin under the Luxor AI name (same
+`covalent_tenki_plugin` module and `tenki` executor). Install one or the other,
+never both.
+
 ## Prerequisites
 
 1. A [Tenki Cloud](https://app.tenki.cloud) account with sandbox access.

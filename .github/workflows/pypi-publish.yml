@@ -46,8 +46,10 @@ jobs:
         run: python -m build
 
       # The same sources also ship as covalent-luxor-ai-plugin: only
-      # [project].name differs, rewritten in a copy of the tree.
+      # [project].name differs, rewritten in a copy of the tree. Gated so it
+      # can never block the covalent-tenki-plugin release while it's off.
       - name: Build covalent-luxor-ai-plugin
+        if: ${{ vars.LUXORAI_PUBLISH == 'true' }}
         run: |
           set -euo pipefail
           src="$RUNNER_TEMP/luxor-ai"
@@ -65,9 +67,10 @@ jobs:
           open(path, "w").write(text)
           PY
           python -m build "$src" --outdir dist-luxor-ai
+          twine check dist-luxor-ai/*
 
       - name: Check package
-        run: twine check dist/* dist-luxor-ai/*
+        run: twine check dist/*
 
       - name: Check if version is already published
         id: version
@@ -77,12 +80,13 @@ jobs:
           NAME=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["name"])')
           VERSION=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
 
-          if curl -fsS "https://pypi.org/pypi/${NAME}/${VERSION}/json" >/dev/null 2>&1; then
-            echo "${NAME}@${VERSION} already published, skipping"
-            echo "published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
-          fi
+          # Only a 404 means unpublished; any other answer fails the run.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${NAME}/${VERSION}/json" || true)
+          case "$code" in
+            200) echo "${NAME}@${VERSION} already published, skipping"; echo "published=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "published=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::PyPI returned '${code}' for ${NAME}@${VERSION}"; exit 1 ;;
+          esac
 
       - name: Publish to PyPI
         if: ${{ steps.version.outputs.published == 'false' && inputs.dry_run == false && inputs.skip_publish == false }}
@@ -90,15 +94,17 @@ jobs:
 
       - name: Check if covalent-luxor-ai-plugin version is already published
         id: luxorai
+        if: ${{ vars.LUXORAI_PUBLISH == 'true' }}
         run: |
           set -euo pipefail
+          NAME=covalent-luxor-ai-plugin
           VERSION=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
-          if curl -fsS "https://pypi.org/pypi/covalent-luxor-ai-plugin/${VERSION}/json" >/dev/null 2>&1; then
-            echo "covalent-luxor-ai-plugin@${VERSION} already published, skipping"
-            echo "published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "published=false" >> "$GITHUB_OUTPUT"
-          fi
+          code=$(curl -sS -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/${NAME}/${VERSION}/json" || true)
+          case "$code" in
+            200) echo "${NAME}@${VERSION} already published, skipping"; echo "published=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "published=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::PyPI returned '${code}' for ${NAME}@${VERSION}"; exit 1 ;;
+          esac
 
       # Needs a PyPI (pending) trusted publisher for covalent-luxor-ai-plugin
       # naming this workflow and the pypi-publish environment.
