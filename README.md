@@ -24,7 +24,7 @@ never both.
 1. A [Tenki Cloud](https://app.tenki.cloud) account with sandbox access.
 2. A Tenki API key, exposed as `LUXOR_API_KEY` or `TENKI_API_KEY` (or `LUXOR_AUTH_TOKEN` /
    `TENKI_AUTH_TOKEN`) on the machine running the Covalent dispatcher
-   (`LUXOR_*` variables need `tenki` 1.5.3 or later, `lx_` keys 1.4.2 or later).
+   (`LUXOR_*` variables need sandbox SDK 1.5.3 or later, `lx_` keys 1.4.2 or later).
    `LUXOR_API_KEY` is only used when it starts with `lx_` or `tk_`; any other
    value is ignored.
 3. Local Python minor version matching the sandbox Python (3.12 on the default

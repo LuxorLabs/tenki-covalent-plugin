@@ -19,7 +19,7 @@ Lifecycle per task:
 Authentication uses the ``LUXOR_API_KEY`` or ``TENKI_API_KEY`` (or
 ``LUXOR_AUTH_TOKEN`` / ``TENKI_AUTH_TOKEN``) environment variable on the
 machine running the Covalent dispatcher, as resolved by the SDK (``LUXOR_*``
-variables need ``tenki`` 1.5.3 or later, ``lx_`` keys 1.4.2 or later).
+variables need sandbox SDK 1.5.3 or later, ``lx_`` keys 1.4.2 or later).
 ``LUXOR_API_KEY`` is only used when it starts with ``lx_`` or ``tk_``; any
 other value is ignored.
 
