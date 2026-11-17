@@ -22,9 +22,11 @@ never both.
 ## Prerequisites
 
 1. A [Tenki Cloud](https://app.tenki.cloud) account with sandbox access.
-2. A Tenki API key, exposed as `LUXORAI_API_KEY` or `TENKI_API_KEY` (or `LUXORAI_AUTH_TOKEN` /
+2. A Tenki API key, exposed as `LUXOR_API_KEY` or `TENKI_API_KEY` (or `LUXOR_AUTH_TOKEN` /
    `TENKI_AUTH_TOKEN`) on the machine running the Covalent dispatcher
-   (`LUXORAI_*` and `lx_` keys need `tenki` 1.4.2 or later).
+   (`LUXOR_*` variables need sandbox SDK 1.5.3 or later, `lx_` keys 1.4.2 or later).
+   `LUXOR_API_KEY` is only used when it starts with `lx_` or `tk_`; any other
+   value is ignored.
 3. Local Python minor version matching the sandbox Python (3.12 on the default
    image) — tasks travel via `cloudpickle`, which requires matching
    interpreters. The executor verifies this and fails fast with a clear
@@ -56,17 +58,17 @@ dispatch_id = ct.dispatch(workflow)(1764)
 
 ## Configuration
 
-| Argument | Default | Description |
-|---|---|---|
-| `project_id` | first project on the API key | Tenki project to create sandboxes in |
-| `cpu_cores` | Tenki default (2) | Sandbox CPU cores |
-| `memory_mb` | Tenki default (4096) | Sandbox memory |
-| `disk_size_gb` | Tenki default (5) | Ephemeral root disk |
-| `image` | unset (Ubuntu base) | Registry image ref; a prepared image skips the bootstrap |
-| `sandbox_max_duration_seconds` | 3600 | Hard VM lifetime (self-destruct safety net) |
-| `bootstrap_timeout_seconds` | 600 | Timeout for the apt + pip bootstrap |
-| `task_timeout_seconds` | 1800 | Timeout for the task execution |
-| `sandbox_requirements` | `""` | Extra pip specs installed at bootstrap (`cloudpickle` and `covalent` always included) |
+| Argument                       | Default                      | Description                                                                           |
+| ------------------------------ | ---------------------------- | ------------------------------------------------------------------------------------- |
+| `project_id`                   | first project on the API key | Tenki project to create sandboxes in                                                  |
+| `cpu_cores`                    | Tenki default (2)            | Sandbox CPU cores                                                                     |
+| `memory_mb`                    | Tenki default (4096)         | Sandbox memory                                                                        |
+| `disk_size_gb`                 | Tenki default (5)            | Ephemeral root disk                                                                   |
+| `image`                        | unset (Ubuntu base)          | Registry image ref; a prepared image skips the bootstrap                              |
+| `sandbox_max_duration_seconds` | 3600                         | Hard VM lifetime (self-destruct safety net)                                           |
+| `bootstrap_timeout_seconds`    | 600                          | Timeout for the apt + pip bootstrap                                                   |
+| `task_timeout_seconds`         | 1800                         | Timeout for the task execution                                                        |
+| `sandbox_requirements`         | `""`                         | Extra pip specs installed at bootstrap (`cloudpickle` and `covalent` always included) |
 
 ## How it works
 
